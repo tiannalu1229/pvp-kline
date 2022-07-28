@@ -1,0 +1,31 @@
+{
+  "name": "qilin-pvp",
+  "version": "0.1.0",
+  "scripts": {
+    "codegen2": "graph codegen --output-dir src/types/",
+    "build-contract": "solc contracts/Gravity.sol --abi -o abis --overwrite && solc contracts/Gravity.sol --bin -o bin --overwrite",
+    "create": "graph create KunAndPeng/qilinv2 --node https://api.thegraph.com/deploy/",
+    "create-local": "graph create qilinv2 --node http://10.1.1.145:8020",
+    "create-local-46": "graph create qilinv2 --node http://10.1.1.46:8020",
+    "create-local-rc": "graph create qilinv2 --node http://127.0.0.1:8020",
+    "remove-local": "graph remove --node http://10.1.1.46:8020/ qilinv2",
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "graph deploy kunandpeng/qilinv2 --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy2": "graph deploy KunAndPeng/Qilinv2inrinkeby --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy-local": "graph deploy qilinv2 --ipfs http://10.1.1.145:5001 --node http:/10.1.1.145:8020",
+    "deploy-local-rc": "graph deploy qilinv2 --ipfs http://127.0.0.1:5001 --node http:/127.0.0.1:8020",
+    "deploy-local-46": "graph deploy qilinv2 --ipfs http://10.1.1.46:5001 --node http:/10.1.1.46:8020"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "^0.23.2",
+    "@graphprotocol/graph-ts": "^0.23.1"
+  },
+  "dependencies": {
+    "babel-polyfill": "^6.26.0",
+    "babel-register": "^6.26.0",
+    "truffle": "^5.0.4",
+    "truffle-contract": "^4.0.5",
+    "truffle-hdwallet-provider": "^1.0.4"
+  }
+}

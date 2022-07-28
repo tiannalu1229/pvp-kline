@@ -1,0 +1,81 @@
+type Pool @entity {
+  id: ID!
+  trade_pair: String!
+  token0: String!
+  token0Symbol: String!
+  token0Decimal: BigInt!
+  token1: String!
+  token1Symbol: String!
+  token1Decimal: BigInt!
+  token_price: String!
+  pay_token: String!
+  oracle: String!
+  reverse: Boolean!
+  asset: BigInt!
+  lp: BigInt!
+  lp_price: BigInt!
+  margin_ratio: Int!
+  count_position: Int!
+  create_at: BigInt!
+  create_block: BigInt!
+}
+
+type Setting @entity {
+  id: ID!
+  margin_ratio: BigInt!
+}
+
+type Position @entity {
+  id: ID!
+  user: String!
+  closer: String!
+  level: Int!
+  asset: BigInt!
+  lp: BigInt!
+  open_price: BigInt!
+  type: Int!
+  close_price: BigInt!
+  lp_pnl: BigInt!
+  fact_pnl: BigInt!
+  open_at: BigInt!
+  open_block: BigInt!
+  close_at: BigInt!
+  close_block: BigInt!
+}
+
+type Opertion @entity {
+  id: ID!
+  user: String!
+  type: Int!
+  level: Int!
+  margin: BigInt!
+  lp: BigInt!
+  lp_price: BigInt!
+  price: BigInt!
+  create_at: BigInt!
+  create_block: BigInt!
+}
+
+type MergePosition @entity {
+  id: ID!
+  asset: BigInt!
+  lp: BigInt!
+  open_price: BigInt!
+  open_lp: BigInt!
+  fake_lp: BigInt!
+  create_at: BigInt!
+  create_block: BigInt!
+}
+
+type OracleToPool @entity {
+  id: ID!
+  pool: [String!]!
+}
+
+type Price @entity {
+  id: ID!
+  pool_address: String!
+  price: String!
+  create_at: BigInt!
+  create_block: BigInt!
+}
