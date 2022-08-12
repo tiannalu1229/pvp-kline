@@ -15,10 +15,28 @@
         "internalType": "bool",
         "name": "reverse_",
         "type": "bool"
+      },
+      {
+        "internalType": "uint8",
+        "name": "typ",
+        "type": "uint8"
       }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint16",
+        "name": "level",
+        "type": "uint16"
+      }
+    ],
+    "name": "AddLevel",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -51,6 +69,12 @@
         "indexed": false,
         "internalType": "uint256",
         "name": "closePrice",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "protocolFee",
         "type": "uint256"
       }
     ],
@@ -88,6 +112,12 @@
         "indexed": false,
         "internalType": "uint256",
         "name": "liqPrice",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "protocolFee",
         "type": "uint256"
       }
     ],
@@ -186,6 +216,32 @@
     "inputs": [
       {
         "indexed": false,
+        "internalType": "uint16",
+        "name": "level",
+        "type": "uint16"
+      }
+    ],
+    "name": "RemoveLevel",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "liqProtocolFee",
+        "type": "uint256"
+      }
+    ],
+    "name": "SetLiqProtocolFee",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "internalType": "uint256",
         "name": "marginRatio",
         "type": "uint256"
@@ -195,17 +251,17 @@
     "type": "event"
   },
   {
-    "inputs": [],
-    "name": "getPrice",
-    "outputs": [
+    "anonymous": false,
+    "inputs": [
       {
+        "indexed": false,
         "internalType": "uint256",
-        "name": "",
+        "name": "protocolFee",
         "type": "uint256"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
+    "name": "SetProtocolFee",
+    "type": "event"
   },
   {
     "inputs": [],
@@ -247,6 +303,19 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "liqProtocolFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -328,19 +397,6 @@
   },
   {
     "inputs": [],
-    "name": "oracle",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "owner",
     "outputs": [
       {
@@ -377,6 +433,11 @@
     "outputs": [
       {
         "internalType": "address",
+        "name": "router",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "user",
         "type": "address"
       },
@@ -406,12 +467,25 @@
   },
   {
     "inputs": [],
-    "name": "precisionDiff",
+    "name": "protocolFee",
     "outputs": [
       {
-        "internalType": "int8",
+        "internalType": "uint256",
         "name": "",
-        "type": "int8"
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "protocolReceipt",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -422,19 +496,6 @@
     "name": "renounceOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "reverse",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -466,9 +527,9 @@
   {
     "inputs": [
       {
-        "internalType": "int16",
+        "internalType": "uint16",
         "name": "level",
-        "type": "int16"
+        "type": "uint16"
       }
     ],
     "name": "addLevel",
@@ -479,9 +540,9 @@
   {
     "inputs": [
       {
-        "internalType": "int16",
+        "internalType": "uint16",
         "name": "level",
-        "type": "int16"
+        "type": "uint16"
       }
     ],
     "name": "removeLevel",
@@ -504,6 +565,11 @@
   },
   {
     "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
       {
         "internalType": "uint256",
         "name": "margin",
@@ -532,6 +598,16 @@
         "internalType": "uint32",
         "name": "index",
         "type": "uint32"
+      },
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "receipt",
+        "type": "address"
       }
     ],
     "name": "close",
@@ -545,6 +621,11 @@
         "internalType": "uint32",
         "name": "index",
         "type": "uint32"
+      },
+      {
+        "internalType": "address",
+        "name": "receipt",
+        "type": "address"
       }
     ],
     "name": "liquidate",
@@ -580,6 +661,19 @@
       }
     ],
     "name": "setMarginRatio",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "protocolReceipt_",
+        "type": "address"
+      }
+    ],
+    "name": "setProtocolReceipt",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

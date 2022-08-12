@@ -1,57 +1,146 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "oracle_",
-        "type": "address"
-      },
-      {
-        "internalType": "bool",
-        "name": "reverse_",
-        "type": "bool"
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
   {
-    "inputs": [],
-    "name": "oracle",
-    "outputs": [
+    "inputs": [
       {
         "internalType": "address",
         "name": "",
         "type": "address"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "precisionDiff",
+    "name": "chainLinkOracles",
     "outputs": [
       {
-        "internalType": "int8",
-        "name": "",
-        "type": "int8"
+        "internalType": "address",
+        "name": "oracle",
+        "type": "address"
+      },
+      {
+        "internalType": "uint8",
+        "name": "decimals",
+        "type": "uint8"
       }
     ],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "reverse",
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "oracleTypes",
     "outputs": [
       {
-        "internalType": "bool",
+        "internalType": "uint8",
         "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "v2Oracles",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "timestampOld",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "priceCumulativeOld",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "priceOld",
+        "type": "uint256"
+      },
+      {
+        "internalType": "int8",
+        "name": "precisionDiff",
+        "type": "int8"
+      },
+      {
+        "internalType": "address",
+        "name": "oracle",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "reverse",
         "type": "bool"
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "v3Oracles",
+    "outputs": [
+      {
+        "internalType": "int8",
+        "name": "precisionDiff",
+        "type": "int8"
+      },
+      {
+        "internalType": "address",
+        "name": "oracle",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "reverse",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "oracle",
+        "type": "address"
+      },
+      {
+        "internalType": "uint8",
+        "name": "typ",
+        "type": "uint8"
+      },
+      {
+        "internalType": "bool",
+        "name": "reverse",
+        "type": "bool"
+      }
+    ],
+    "name": "setPool",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

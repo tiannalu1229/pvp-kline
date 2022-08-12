@@ -8,9 +8,12 @@ type Pool @entity {
   token1Symbol: String!
   token1Decimal: BigInt!
   token_price: String!
-  pay_token: String!
+  oracle_type: Int!
   oracle: String!
   reverse: Boolean!
+  pay_token: String!
+  pay_token_symbol: String!
+  level: [Int!]!
   asset: BigInt!
   lp: BigInt!
   lp_price: BigInt!
@@ -23,28 +26,34 @@ type Pool @entity {
 type Setting @entity {
   id: ID!
   margin_ratio: BigInt!
+  protocol_fee: BigInt!
+  liq_protocol_fee: BigInt!
 }
 
 type Position @entity {
   id: ID!
+  pool_address: String!
+  type: Int!
   user: String!
   closer: String!
   level: Int!
+  margin: BigInt!
   asset: BigInt!
   lp: BigInt!
   open_price: BigInt!
-  type: Int!
-  close_price: BigInt!
-  lp_pnl: BigInt!
-  fact_pnl: BigInt!
   open_at: BigInt!
   open_block: BigInt!
+  close_price: BigInt!
+  protocol_fee: BigInt!
+  lp_pnl: BigInt!
+  fact_pnl: BigInt!
   close_at: BigInt!
   close_block: BigInt!
 }
 
 type Opertion @entity {
   id: ID!
+  pool_address: String!
   user: String!
   type: Int!
   level: Int!
@@ -52,6 +61,8 @@ type Opertion @entity {
   lp: BigInt!
   lp_price: BigInt!
   price: BigInt!
+  protocol_fee: BigInt!
+  pnl: BigInt!
   create_at: BigInt!
   create_block: BigInt!
 }

@@ -5,6 +5,26 @@
         "internalType": "uint256",
         "name": "marginRatio_",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "protocolFee_",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "liqProtocolFee_",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "priceAddress_",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "protocolReceipt_",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -36,6 +56,12 @@
         "internalType": "bool",
         "name": "reverse",
         "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "typ",
+        "type": "uint8"
       }
     ],
     "name": "CreatePool",
@@ -66,12 +92,77 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "liqProtocolFee",
+        "type": "uint256"
+      }
+    ],
+    "name": "SetLiqProtocolFee",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "marginRatio",
         "type": "uint256"
       }
     ],
     "name": "SetMarginRatio",
     "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "priceAddress",
+        "type": "address"
+      }
+    ],
+    "name": "SetPriceAddress",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "protocolFee",
+        "type": "uint256"
+      }
+    ],
+    "name": "SetProtocolFee",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "protocolReceipt",
+        "type": "address"
+      }
+    ],
+    "name": "SetProtocolReceipt",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "liqProtocolFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [],
@@ -89,6 +180,64 @@
   {
     "inputs": [],
     "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "pools",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "priceAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "protocolFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "protocolReceipt",
     "outputs": [
       {
         "internalType": "address",
@@ -135,6 +284,11 @@
         "internalType": "bool",
         "name": "reverse",
         "type": "bool"
+      },
+      {
+        "internalType": "uint8",
+        "name": "typ",
+        "type": "uint8"
       }
     ],
     "name": "createPool",
@@ -151,6 +305,58 @@
       }
     ],
     "name": "setMarginRatio",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "protocolFee_",
+        "type": "uint256"
+      }
+    ],
+    "name": "setProtocolFee",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "liqProtocolFee_",
+        "type": "uint256"
+      }
+    ],
+    "name": "setLiqProtocolFee",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "priceAddress_",
+        "type": "address"
+      }
+    ],
+    "name": "setPriceAddress",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "protocolReceipt_",
+        "type": "address"
+      }
+    ],
+    "name": "setProtocolReceipt",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

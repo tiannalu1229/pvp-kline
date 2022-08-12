@@ -1,9 +1,12 @@
 import { Open, Close, Liquidate, Rebase } from '../types/templates/Pool/Pool';
-import { SetMarginRatio } from '../types/templates/UniswapV3Pool/Pool';
+import { SetMarginRatio, SetProtocolFee, SetLiqProtocolFee, RemoveLevel, AddLevel } from '../types/templates/UniswapV3Pool/Pool';
 import { Pool, Position, Setting, MergePosition, Opertion } from '../types/schema';
 import { ZERO_BI, E18 } from '../utils/constants';
 import { BigInt } from '@graphprotocol/graph-ts';
 
+//TODO add new event add level
+
+//TODO open、close、liquidate add serviceFee
 export function handleOpen(event: Open): void {
     
     //get event data
@@ -22,13 +25,16 @@ export function handleOpen(event: Open): void {
         return
     }
     position = new Position(positionId)
+    position.pool_address = poolAddress.toHexString()
     position.user = sender.toHexString()
     position.level = level
+    position.margin = margin
     position.asset = margin.times(BigInt.fromI32(level).abs())
     position.lp = lp
     position.open_price = price
     position.type = 1
     position.close_price = ZERO_BI
+    position.protocol_fee = ZERO_BI
     position.lp_pnl = ZERO_BI
     position.fact_pnl = ZERO_BI
     position.open_at = event.block.timestamp
@@ -115,17 +121,21 @@ export function handleOpen(event: Open): void {
     }
     opertion = new Opertion(opertionId)
     opertion.user = sender.toHexString()
+    opertion.pool_address = poolAddress.toHexString()
     opertion.type = 1
     opertion.level = level
     opertion.margin = margin
     opertion.lp = lp
     opertion.lp_price = pool.lp_price
     opertion.price = price
+    opertion.protocol_fee = ZERO_BI
+    opertion.pnl = ZERO_BI
     opertion.create_at = event.block.timestamp
     opertion.create_block = event.block.number
     opertion.save()
 }
 
+//TODO close、liquidate fact_pnl need minus service_fee
 export function handleClose(event: Close): void {
 
     //get event data
@@ -135,6 +145,7 @@ export function handleClose(event: Close): void {
     let sender = event.params.user
     let asset = event.params.receivePosition
     let price = event.params.closePrice
+    let protocolFee = event.params.protocolFee
 
     //edit position
     let positionId = poolAddress.toHexString().concat("-").concat(index.toString())
@@ -145,8 +156,9 @@ export function handleClose(event: Close): void {
     position.closer = sender.toHexString()
     position.type = 2
     position.close_price = price
+    position.protocol_fee = protocolFee
     position.lp_pnl = lp.minus(position.lp)
-    position.fact_pnl = asset.minus(position.asset)
+    position.fact_pnl = asset.minus(position.asset).minus(protocolFee)
     position.close_at = event.block.timestamp
     position.close_block = event.block.number
     position.save()
@@ -202,7 +214,7 @@ export function handleClose(event: Close): void {
     }
     pool.asset = pool.asset.minus(position.asset)
     pool.lp = longMergePosition.lp
-        .minus(position.lp.times(BigInt.fromI32(2).minus(lp)))
+        .plus(shortMergePosition.lp.times(BigInt.fromI32(2)).minus(shortMergePosition.fake_lp))
     pool.lp_price = pool.lp.equals(BigInt.fromI32(0)) ? E18 : pool.asset.times(E18).div(pool.lp)
     pool.count_position -= 1
     pool.save()
@@ -228,6 +240,7 @@ export function handleClose(event: Close): void {
         return
     }
     closeOpertion = new Opertion(closeOpertionId)
+    closeOpertion.pool_address = poolAddress.toHexString()
     closeOpertion.user = sender.toHexString()
     closeOpertion.type = 2
     closeOpertion.level = openOpertion.level
@@ -240,6 +253,8 @@ export function handleClose(event: Close): void {
     
     closeOpertion.lp_price = pool.lp_price
     closeOpertion.price = price
+    closeOpertion.protocol_fee = protocolFee
+    closeOpertion.pnl = asset.minus(position.asset).minus(protocolFee)
     closeOpertion.create_at = event.block.timestamp
     closeOpertion.create_block = event.block.number
     closeOpertion.save()
@@ -254,6 +269,7 @@ export function handleLiquidate(event: Liquidate): void {
     let lp = event.params.receiveLp
     let asset = event.params.receivePosition
     let price = event.params.liqPrice
+    let fee = event.params.protocolFee
 
     //edit position
     let positionId = poolAddress.toHexString().concat("-").concat(index.toString())
@@ -264,6 +280,7 @@ export function handleLiquidate(event: Liquidate): void {
     position.closer = sender.toHexString()
     position.type = 3
     position.close_price = price
+    position.protocol_fee = fee
     position.lp_pnl = lp.minus(position.lp)
     position.fact_pnl = asset.minus(position.asset)
     position.close_at = event.block.timestamp
@@ -345,6 +362,7 @@ export function handleLiquidate(event: Liquidate): void {
         return
     }
     closeOpertion = new Opertion(closeOpertionId)
+    closeOpertion.pool_address = poolAddress.toHexString()
     closeOpertion.user = sender.toHexString()
     closeOpertion.type = 3
     closeOpertion.level = openOpertion.level
@@ -354,6 +372,8 @@ export function handleLiquidate(event: Liquidate): void {
     } else {
         closeOpertion.lp = position.lp.times(BigInt.fromI32(2).minus(lp))
     }
+    closeOpertion.protocol_fee = fee
+    closeOpertion.pnl = ZERO_BI.minus(openOpertion.margin)
     closeOpertion.lp_price = pool.lp_price
     closeOpertion.price = price
     closeOpertion.create_at = event.block.timestamp
@@ -374,8 +394,6 @@ export function handleRebase(event: Rebase): void {
     if (pool == null) {
         return
     }
-    pool.lp_price = price
-    pool.save()
 
     //edit merge position
     let longId = poolAddress.toHexString().concat("-").concat("long")
@@ -391,6 +409,69 @@ export function handleRebase(event: Rebase): void {
 
     shortMergePosition.fake_lp = shortLp
     shortMergePosition.save()
+
+    pool.lp = longLp.plus(shortMergePosition.lp.times(BigInt.fromI32(2)).minus(shortLp))
+    if (pool.lp.equals(ZERO_BI)) {
+        pool.lp_price = ZERO_BI
+    } else {
+        pool.lp_price = pool.asset.times(E18).div(pool.lp)
+    }
+    pool.token_price = price.toString()
+    pool.save()
+}
+
+export function handleAddLevel(event: AddLevel): void {
+    
+    //get event data
+    let poolAddress = event.address.toHexString()
+    let level = event.params.level
+
+    let pool = Pool.load(poolAddress)
+    if (pool == null) {
+        return
+    }
+    
+    let levels = pool.level
+    for (let i = 0; i < levels.length; i++) {
+        if (levels[i] > level) {
+            for (let j = levels.length; j > i; j--) {
+                levels[j] = levels[j - 1]
+            }
+            levels[i] = level
+            break
+        }
+    }
+    levels[levels.length] = level
+    pool.level = levels
+    pool.save()
+}
+
+export function handleRemoveLevel(event: RemoveLevel): void {
+    
+    //get event data
+    let poolAddress = event.address.toHexString()
+    let level = event.params.level
+
+    let pool = Pool.load(poolAddress)
+    if (pool == null) {
+        return
+    }
+    
+    let levels = pool.level
+    for (let i = 0; i < levels.length; i++) {
+        if (levels[i] == level) {
+            for (let j = i; j < levels.length; j++) {
+                if (j == levels.length - 1) {
+                    levels.pop()
+                    break
+                }
+                levels[j] = levels[j + 1]
+            }
+            break
+        }
+    }
+    pool.level = levels
+    pool.save()
 }
 
 export function handleSetMarginRatio(event: SetMarginRatio): void {
@@ -406,5 +487,37 @@ export function handleSetMarginRatio(event: SetMarginRatio): void {
     }
 
     setting.margin_ratio = marginRatio
+    setting.save()
+}
+
+export function handleSetProtocolFee(event: SetProtocolFee): void {
+
+    //get event data
+    let poolAddress = event.address.toHexString()
+    let protocolFee = event.params.protocolFee
+
+    //edit setting
+    let setting = Setting.load(poolAddress)
+    if (setting == null) {
+        return
+    }
+
+    setting.protocol_fee = protocolFee
+    setting.save()
+}
+
+export function handleSetLiqProtocolFee(event: SetLiqProtocolFee): void {
+
+    //get event data
+    let poolAddress = event.address.toHexString()
+    let liqProtocolFee = event.params.liqProtocolFee
+
+    //edit setting
+    let setting = Setting.load(poolAddress)
+    if (setting == null) {
+        return
+    }
+
+    setting.liq_protocol_fee = liqProtocolFee
     setting.save()
 }

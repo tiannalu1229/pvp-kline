@@ -1,11 +1,13 @@
 import { CreatePool } from '../types/Factory/Factory';
 import { MergePosition, OracleToPool, Pool, Setting } from '../types/schema';
-import { Pool as PoolTemplate, UniswapV3Pool as V3Tmp } from '../types/templates'
-import { ZERO_BI } from '../utils/constants';
+import { Pool as PoolTemplate, UniswapV3Pool as V3Tmp, UniswapV2orSushi as V2Tmp } from '../types/templates'
+import { ZERO_BI, E18 } from '../utils/constants';
 import { BigInt } from '@graphprotocol/graph-ts';
-import { SetMarginRatio } from '../types/templates/UniswapV3Pool/Pool';
+import { SetMarginRatio, SetProtocolFee, AddLevel, RemoveLevel, SetLiqProtocolFee } from '../types/templates/UniswapV3Pool/Pool';
 import { fetchTradePair, fetchTokenSymbol, fetchTokenDecimals } from '../utils/token';
 
+//TODO need init level
+//TODO add oracle_from to record price oracle
 export function handleCreatePool(event: CreatePool): void {
 
     //get event data
@@ -13,6 +15,7 @@ export function handleCreatePool(event: CreatePool): void {
     let payToken = event.params.payToken
     let oracle = event.params.oracle
     let reverse = event.params.reverse
+    let type = event.params.typ
 
     //create new pool
     let pool = Pool.load(poolAddress.toHexString())
@@ -37,12 +40,15 @@ export function handleCreatePool(event: CreatePool): void {
     pool.token1 = token1.toHexString()
     pool.token1Symbol = token1Symbol
     pool.token1Decimal = token1Decimal
+    pool.token_price = "0"
     pool.pay_token = payToken.toHexString()
+    pool.pay_token_symbol = fetchTokenSymbol(payToken)
+    pool.oracle_type = type
     pool.oracle = oracle.toHexString()
     pool.reverse = reverse
     pool.asset = ZERO_BI
     pool.lp = ZERO_BI
-    pool.lp_price = BigInt.fromI32(1)
+    pool.lp_price = E18
     pool.margin_ratio = 0
     pool.count_position = 0
     pool.create_at = event.block.timestamp
@@ -94,7 +100,15 @@ export function handleCreatePool(event: CreatePool): void {
     //create pool template
     PoolTemplate.create(poolAddress)
     //create price template
-    V3Tmp.create(oracle)
+    if (type == 1) {
+
+    } 
+    if (type == 2) {
+        V2Tmp.create(oracle)
+    } 
+    if (type == 3) {
+        V3Tmp.create(oracle)
+    }
 }
 
 export function handleSetMarginRatio(event: SetMarginRatio): void {
@@ -111,5 +125,36 @@ export function handleSetMarginRatio(event: SetMarginRatio): void {
 
     setting.margin_ratio = marginRatio
     setting.save()
-    
+}
+
+export function handleSetProtocolFee(event: SetProtocolFee): void {
+
+    //get event data
+    let poolAddress = event.address.toHexString()
+    let protocolFee = event.params.protocolFee
+
+    //edit setting
+    let setting = Setting.load(poolAddress)
+    if (setting == null) {
+        setting = new Setting(poolAddress)
+    }
+
+    setting.protocol_fee = protocolFee
+    setting.save()
+}
+
+export function handleSetLiqProtocolFee(event: SetLiqProtocolFee): void {
+
+    //get event data
+    let poolAddress = event.address.toHexString()
+    let liqProtocolFee = event.params.liqProtocolFee
+
+    //edit setting
+    let setting = Setting.load(poolAddress)
+    if (setting == null) {
+        setting = new Setting(poolAddress)
+    }
+
+    setting.liq_protocol_fee = liqProtocolFee
+    setting.save()
 }

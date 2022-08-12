@@ -6,9 +6,9 @@ dataSources:
     name: factory
     network: rinkeby
     source:
-      address: '0x557342411d379741aE3e6A29CA4A9EDB0841931E'
+      address: '0xd17DcC7413d3288CB926F6A5Bd87e44FA1D0ad2C'
       abi: Factory
-      startBlock: 11089799
+      startBlock: 11142226
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -30,10 +30,14 @@ dataSources:
         - name: ERC20NameBytes
           file: ./abis/ERC20NameBytes.json
       eventHandlers:
-        - event: CreatePool(address,address,address,bool)
+        - event: CreatePool(address,address,address,bool,uint8)
           handler: handleCreatePool
         - event: SetMarginRatio(uint256)
           handler: handleSetMarginRatio
+        - event: SetProtocolFee(uint256)
+          handler: handleSetProtocolFee
+        - event: SetLiqProtocolFee(uint256)
+          handler: handleSetLiqProtocolFee
 templates:
   - kind: ethereum/contract
     name: Pool
@@ -58,14 +62,22 @@ templates:
       eventHandlers:
         - event: Open(uint32,address,uint256,uint256,uint256,int16)
           handler: handleOpen
-        - event: Close(uint32,address,uint256,uint256,uint256)
+        - event: Close(uint32,address,uint256,uint256,uint256,uint256)
           handler: handleClose
-        - event: Liquidate(uint32,address,uint256,uint256,uint256)
+        - event: Liquidate(uint32,address,uint256,uint256,uint256,uint256)
           handler: handleLiquidate
         - event: Rebase(uint256,uint256,uint256)
           handler: handleRebase
+        - event: AddLevel(uint16)
+          handler: handleAddLevel
+        - event: RemoveLevel(uint16)
+          handler: handleRemoveLevel
         - event: SetMarginRatio(uint256)
           handler: handleSetMarginRatio
+        - event: SetProtocolFee(uint256)
+          handler: handleSetProtocolFee
+        - event: SetLiqProtocolFee(uint256)
+          handler: handleSetLiqProtocolFee
   - kind: ethereum/contract
     name: UniswapV3Pool
     network: rinkeby
@@ -75,7 +87,7 @@ templates:
       kind: ethereum/events
       apiVersion: 0.0.5
       language: wasm/assemblyscript
-      file: ./src/mappings/price.ts
+      file: ./src/mappings/price-v3.ts
       entities:
         - Price
       abis:
@@ -92,3 +104,29 @@ templates:
       eventHandlers:
         - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24)
           handler: handleSwap
+  - kind: ethereum/contract
+    name: UniswapV2orSushi
+    network: rinkeby
+    source:
+      abi: UniswapV2
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/mappings/price-v2.ts
+      entities:
+        - Price
+      abis:
+        - name: Pool
+          file: ./abis/Pool.json
+        - name: UniswapV2
+          file: ./abis/UniswapV2Pair.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: ERC20SymbolBytes
+          file: ./abis/ERC20SymbolBytes.json
+        - name: ERC20NameBytes
+          file: ./abis/ERC20NameBytes.json
+      eventHandlers:      
+        - event: Sync(uint112,uint112)
+          handler: handleSync
