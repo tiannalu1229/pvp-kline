@@ -38,6 +38,10 @@ export class CreatePool__Params {
   get reverse(): boolean {
     return this._event.parameters[3].value.toBoolean();
   }
+
+  get typ(): i32 {
+    return this._event.parameters[4].value.toI32();
+  }
 }
 
 export class OwnershipTransferred extends ethereum.Event {
@@ -62,6 +66,24 @@ export class OwnershipTransferred__Params {
   }
 }
 
+export class SetLiqProtocolFee extends ethereum.Event {
+  get params(): SetLiqProtocolFee__Params {
+    return new SetLiqProtocolFee__Params(this);
+  }
+}
+
+export class SetLiqProtocolFee__Params {
+  _event: SetLiqProtocolFee;
+
+  constructor(event: SetLiqProtocolFee) {
+    this._event = event;
+  }
+
+  get liqProtocolFee(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+}
+
 export class SetMarginRatio extends ethereum.Event {
   get params(): SetMarginRatio__Params {
     return new SetMarginRatio__Params(this);
@@ -80,9 +102,82 @@ export class SetMarginRatio__Params {
   }
 }
 
+export class SetPriceAddress extends ethereum.Event {
+  get params(): SetPriceAddress__Params {
+    return new SetPriceAddress__Params(this);
+  }
+}
+
+export class SetPriceAddress__Params {
+  _event: SetPriceAddress;
+
+  constructor(event: SetPriceAddress) {
+    this._event = event;
+  }
+
+  get priceAddress(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+}
+
+export class SetProtocolFee extends ethereum.Event {
+  get params(): SetProtocolFee__Params {
+    return new SetProtocolFee__Params(this);
+  }
+}
+
+export class SetProtocolFee__Params {
+  _event: SetProtocolFee;
+
+  constructor(event: SetProtocolFee) {
+    this._event = event;
+  }
+
+  get protocolFee(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+}
+
+export class SetProtocolReceipt extends ethereum.Event {
+  get params(): SetProtocolReceipt__Params {
+    return new SetProtocolReceipt__Params(this);
+  }
+}
+
+export class SetProtocolReceipt__Params {
+  _event: SetProtocolReceipt;
+
+  constructor(event: SetProtocolReceipt) {
+    this._event = event;
+  }
+
+  get protocolReceipt(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+}
+
 export class Factory extends ethereum.SmartContract {
   static bind(address: Address): Factory {
     return new Factory("Factory", address);
+  }
+
+  liqProtocolFee(): BigInt {
+    let result = super.call("liqProtocolFee", "liqProtocolFee():(uint256)", []);
+
+    return result[0].toBigInt();
+  }
+
+  try_liqProtocolFee(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "liqProtocolFee",
+      "liqProtocolFee():(uint256)",
+      []
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   marginRatio(): BigInt {
@@ -114,6 +209,78 @@ export class Factory extends ethereum.SmartContract {
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
+
+  pools(param0: Address): boolean {
+    let result = super.call("pools", "pools(address):(bool)", [
+      ethereum.Value.fromAddress(param0)
+    ]);
+
+    return result[0].toBoolean();
+  }
+
+  try_pools(param0: Address): ethereum.CallResult<boolean> {
+    let result = super.tryCall("pools", "pools(address):(bool)", [
+      ethereum.Value.fromAddress(param0)
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+
+  priceAddress(): Address {
+    let result = super.call("priceAddress", "priceAddress():(address)", []);
+
+    return result[0].toAddress();
+  }
+
+  try_priceAddress(): ethereum.CallResult<Address> {
+    let result = super.tryCall("priceAddress", "priceAddress():(address)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  protocolFee(): BigInt {
+    let result = super.call("protocolFee", "protocolFee():(uint256)", []);
+
+    return result[0].toBigInt();
+  }
+
+  try_protocolFee(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall("protocolFee", "protocolFee():(uint256)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  protocolReceipt(): Address {
+    let result = super.call(
+      "protocolReceipt",
+      "protocolReceipt():(address)",
+      []
+    );
+
+    return result[0].toAddress();
+  }
+
+  try_protocolReceipt(): ethereum.CallResult<Address> {
+    let result = super.tryCall(
+      "protocolReceipt",
+      "protocolReceipt():(address)",
+      []
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
 }
 
 export class ConstructorCall extends ethereum.Call {
@@ -135,6 +302,22 @@ export class ConstructorCall__Inputs {
 
   get marginRatio_(): BigInt {
     return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get protocolFee_(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+
+  get liqProtocolFee_(): BigInt {
+    return this._call.inputValues[2].value.toBigInt();
+  }
+
+  get priceAddress_(): Address {
+    return this._call.inputValues[3].value.toAddress();
+  }
+
+  get protocolReceipt_(): Address {
+    return this._call.inputValues[4].value.toAddress();
   }
 }
 
@@ -230,6 +413,10 @@ export class CreatePoolCall__Inputs {
   get reverse(): boolean {
     return this._call.inputValues[2].value.toBoolean();
   }
+
+  get typ(): i32 {
+    return this._call.inputValues[3].value.toI32();
+  }
 }
 
 export class CreatePoolCall__Outputs {
@@ -266,6 +453,126 @@ export class SetMarginRatioCall__Outputs {
   _call: SetMarginRatioCall;
 
   constructor(call: SetMarginRatioCall) {
+    this._call = call;
+  }
+}
+
+export class SetProtocolFeeCall extends ethereum.Call {
+  get inputs(): SetProtocolFeeCall__Inputs {
+    return new SetProtocolFeeCall__Inputs(this);
+  }
+
+  get outputs(): SetProtocolFeeCall__Outputs {
+    return new SetProtocolFeeCall__Outputs(this);
+  }
+}
+
+export class SetProtocolFeeCall__Inputs {
+  _call: SetProtocolFeeCall;
+
+  constructor(call: SetProtocolFeeCall) {
+    this._call = call;
+  }
+
+  get protocolFee_(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+}
+
+export class SetProtocolFeeCall__Outputs {
+  _call: SetProtocolFeeCall;
+
+  constructor(call: SetProtocolFeeCall) {
+    this._call = call;
+  }
+}
+
+export class SetLiqProtocolFeeCall extends ethereum.Call {
+  get inputs(): SetLiqProtocolFeeCall__Inputs {
+    return new SetLiqProtocolFeeCall__Inputs(this);
+  }
+
+  get outputs(): SetLiqProtocolFeeCall__Outputs {
+    return new SetLiqProtocolFeeCall__Outputs(this);
+  }
+}
+
+export class SetLiqProtocolFeeCall__Inputs {
+  _call: SetLiqProtocolFeeCall;
+
+  constructor(call: SetLiqProtocolFeeCall) {
+    this._call = call;
+  }
+
+  get liqProtocolFee_(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+}
+
+export class SetLiqProtocolFeeCall__Outputs {
+  _call: SetLiqProtocolFeeCall;
+
+  constructor(call: SetLiqProtocolFeeCall) {
+    this._call = call;
+  }
+}
+
+export class SetPriceAddressCall extends ethereum.Call {
+  get inputs(): SetPriceAddressCall__Inputs {
+    return new SetPriceAddressCall__Inputs(this);
+  }
+
+  get outputs(): SetPriceAddressCall__Outputs {
+    return new SetPriceAddressCall__Outputs(this);
+  }
+}
+
+export class SetPriceAddressCall__Inputs {
+  _call: SetPriceAddressCall;
+
+  constructor(call: SetPriceAddressCall) {
+    this._call = call;
+  }
+
+  get priceAddress_(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+}
+
+export class SetPriceAddressCall__Outputs {
+  _call: SetPriceAddressCall;
+
+  constructor(call: SetPriceAddressCall) {
+    this._call = call;
+  }
+}
+
+export class SetProtocolReceiptCall extends ethereum.Call {
+  get inputs(): SetProtocolReceiptCall__Inputs {
+    return new SetProtocolReceiptCall__Inputs(this);
+  }
+
+  get outputs(): SetProtocolReceiptCall__Outputs {
+    return new SetProtocolReceiptCall__Outputs(this);
+  }
+}
+
+export class SetProtocolReceiptCall__Inputs {
+  _call: SetProtocolReceiptCall;
+
+  constructor(call: SetProtocolReceiptCall) {
+    this._call = call;
+  }
+
+  get protocolReceipt_(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+}
+
+export class SetProtocolReceiptCall__Outputs {
+  _call: SetProtocolReceiptCall;
+
+  constructor(call: SetProtocolReceiptCall) {
     this._call = call;
   }
 }

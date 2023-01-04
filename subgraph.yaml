@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: factory
-    network: rinkeby
+    network: optimism
     source:
-      address: '0xd17DcC7413d3288CB926F6A5Bd87e44FA1D0ad2C'
+      address: '0x7777A1cdA3A11C2D5D94393470a9e45b34942ABf'
       abi: Factory
-      startBlock: 11142226
+      startBlock: 33620673
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -21,6 +21,8 @@ dataSources:
       abis:
         - name: Factory
           file: ./abis/Factory.json
+        - name: Pool
+          file: ./abis/pool.json
         - name: UniswapV3Pool
           file: ./abis/UniswapV3Pool.json
         - name: ERC20
@@ -41,7 +43,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: Pool
-    network: rinkeby
+    network: optimism
     source:
       abi: Pool
     mapping:
@@ -80,7 +82,7 @@ templates:
           handler: handleSetLiqProtocolFee
   - kind: ethereum/contract
     name: UniswapV3Pool
-    network: rinkeby
+    network: optimism
     source:
       abi: UniswapV3Pool
     mapping:
@@ -106,7 +108,7 @@ templates:
           handler: handleSwap
   - kind: ethereum/contract
     name: UniswapV2orSushi
-    network: rinkeby
+    network: optimism
     source:
       abi: UniswapV2
     mapping:

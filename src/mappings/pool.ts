@@ -1,12 +1,9 @@
 import { Open, Close, Liquidate, Rebase } from '../types/templates/Pool/Pool';
 import { SetMarginRatio, SetProtocolFee, SetLiqProtocolFee, RemoveLevel, AddLevel } from '../types/templates/UniswapV3Pool/Pool';
 import { Pool, Position, Setting, MergePosition, Opertion } from '../types/schema';
-import { ZERO_BI, E18 } from '../utils/constants';
+import { ZERO_BI, E18, pow } from '../utils/constants';
 import { BigInt } from '@graphprotocol/graph-ts';
 
-//TODO add new event add level
-
-//TODO open、close、liquidate add serviceFee
 export function handleOpen(event: Open): void {
     
     //get event data
@@ -25,6 +22,7 @@ export function handleOpen(event: Open): void {
         return
     }
     position = new Position(positionId)
+    position.index = index
     position.pool_address = poolAddress.toHexString()
     position.user = sender.toHexString()
     position.level = level
@@ -51,18 +49,11 @@ export function handleOpen(event: Open): void {
             return
         }
         
-        if (mergePosition.open_lp.equals(ZERO_BI)) {
-            mergePosition.open_lp == lp
-        } else {
-            mergePosition.open_lp = price.times(E18)
-            .div(mergePosition.open_price)
-            .times(mergePosition.open_lp).div(E18)
-            .plus(lp)
-        }
         mergePosition.open_price = price
         mergePosition.asset = mergePosition.asset
             .plus(margin.times(BigInt.fromI32(level).abs()))
         mergePosition.lp = mergePosition.lp.plus(lp)
+        mergePosition.open_lp = mergePosition.lp
         mergePosition.save()
     } else {
         let mergePositionId = poolAddress.toHexString().concat("-").concat("short")
@@ -70,20 +61,13 @@ export function handleOpen(event: Open): void {
         if (mergePosition == null) {
             return
         }
-
-        if (mergePosition.open_lp.equals(ZERO_BI)) {
-            mergePosition.open_lp == lp
-        } else {
-            mergePosition.open_lp = price.times(E18)
-            .div(mergePosition.open_price)
-            .times(mergePosition.open_lp).div(E18)
-            .plus(lp)
-        }
+            
         mergePosition.open_price = price
         mergePosition.asset = mergePosition.asset
             .plus(margin.times(BigInt.fromI32(level).abs()))
         mergePosition.lp = mergePosition.lp.plus(lp)
         mergePosition.fake_lp = mergePosition.fake_lp.plus(lp)
+        mergePosition.open_lp = mergePosition.fake_lp
         mergePosition.save()
     }
 
@@ -102,10 +86,13 @@ export function handleOpen(event: Open): void {
     if (longMergePosition == null || shortMergePosition == null) {
         return
     }
+
+    
+    pool.margin = pool.margin.plus(margin)
     pool.asset = pool.asset.plus((margin.times(BigInt.fromI32(level).abs())))
     pool.lp = longMergePosition.lp
         .plus((shortMergePosition.lp.times(BigInt.fromI32(2)).minus(shortMergePosition.fake_lp)))
-    pool.lp_price = pool.lp.equals(BigInt.fromI32(0)) ? E18 : pool.asset.times(E18).div(pool.lp)
+        pool.lp_price = pool.lp.equals(BigInt.fromI32(0)) ? E18 : pool.asset.times(E18).div(pool.lp)
     pool.count_position += 1
     pool.save()
 
@@ -130,12 +117,12 @@ export function handleOpen(event: Open): void {
     opertion.price = price
     opertion.protocol_fee = ZERO_BI
     opertion.pnl = ZERO_BI
+    opertion.tx_hash = event.transaction.hash.toHexString()
     opertion.create_at = event.block.timestamp
     opertion.create_block = event.block.number
     opertion.save()
 }
 
-//TODO close、liquidate fact_pnl need minus service_fee
 export function handleClose(event: Close): void {
 
     //get event data
@@ -171,13 +158,10 @@ export function handleClose(event: Close): void {
             return
         }
         
-        mergePosition.open_lp = price.times(E18)
-            .div(mergePosition.open_price)
-            .times(mergePosition.open_lp).div(E18)
-            .minus(lp)
         mergePosition.open_price = price
-        mergePosition.asset = mergePosition.asset.minus(position.asset)
-        mergePosition.lp = mergePosition.lp.minus(lp)
+        mergePosition.lp = mergePosition.lp.gt(lp) ? mergePosition.lp.minus(lp) : ZERO_BI
+        mergePosition.open_lp = mergePosition.lp
+        mergePosition.asset = mergePosition.asset.gt(position.asset) ? mergePosition.asset.minus(position.asset) : ZERO_BI
         mergePosition.save()
     } else {
         let mergePositionId = poolAddress.toHexString().concat("-").concat("short")
@@ -186,14 +170,11 @@ export function handleClose(event: Close): void {
             return
         }
 
-        mergePosition.open_lp = price.times(E18)
-            .div(mergePosition.open_price)
-            .times(mergePosition.open_lp).div(E18)
-            .minus(lp)
         mergePosition.open_price = price
-        mergePosition.asset = mergePosition.asset.minus(position.asset)
-        mergePosition.lp = mergePosition.lp.minus(lp)
-        mergePosition.fake_lp = mergePosition.fake_lp.minus(lp)
+        mergePosition.lp = mergePosition.lp.gt(position.lp) ? mergePosition.lp.minus(position.lp) : ZERO_BI
+        mergePosition.fake_lp = mergePosition.fake_lp.gt(lp) ? mergePosition.fake_lp.minus(lp) : ZERO_BI
+        mergePosition.open_lp = mergePosition.fake_lp
+        mergePosition.asset = mergePosition.asset.gt(position.asset) ? mergePosition.asset.minus(position.asset) : ZERO_BI
         mergePosition.save()
     }
 
@@ -212,10 +193,11 @@ export function handleClose(event: Close): void {
     if (longMergePosition == null || shortMergePosition == null) {
         return
     }
-    pool.asset = pool.asset.minus(position.asset)
+    pool.margin = pool.margin.gt(asset.plus(position.margin).minus(position.asset)) ? pool.margin.minus(asset.plus(position.margin).minus(position.asset)) : ZERO_BI
+    pool.asset = pool.asset.gt(asset) ? pool.asset.minus(asset) : ZERO_BI
     pool.lp = longMergePosition.lp
         .plus(shortMergePosition.lp.times(BigInt.fromI32(2)).minus(shortMergePosition.fake_lp))
-    pool.lp_price = pool.lp.equals(BigInt.fromI32(0)) ? E18 : pool.asset.times(E18).div(pool.lp)
+        pool.lp_price = pool.lp.equals(BigInt.fromI32(0)) ? E18 : pool.asset.times(E18).div(pool.lp)
     pool.count_position -= 1
     pool.save()
     
@@ -248,13 +230,14 @@ export function handleClose(event: Close): void {
     if (openOpertion.level > 0) {
         closeOpertion.lp = lp
     } else {
-        closeOpertion.lp = position.lp.times(BigInt.fromI32(2).minus(lp))
+        closeOpertion.lp = position.lp.times(BigInt.fromI32(2)).minus(lp)
     }
     
     closeOpertion.lp_price = pool.lp_price
     closeOpertion.price = price
     closeOpertion.protocol_fee = protocolFee
-    closeOpertion.pnl = asset.minus(position.asset).minus(protocolFee)
+    closeOpertion.pnl = asset.gt(position.asset) ? asset.minus(position.asset) : ZERO_BI
+    closeOpertion.tx_hash = event.transaction.hash.toHexString()
     closeOpertion.create_at = event.block.timestamp
     closeOpertion.create_block = event.block.number
     closeOpertion.save()
@@ -294,13 +277,11 @@ export function handleLiquidate(event: Liquidate): void {
         if (mergePosition == null) {
             return
         }
-        mergePosition.open_lp = price.times(E18)
-            .div(mergePosition.open_price)
-            .times(mergePosition.open_lp).div(E18)
-            .minus(lp)
+        
         mergePosition.open_price = price
-        mergePosition.asset = mergePosition.asset.minus(position.asset)
-        mergePosition.lp = mergePosition.lp.minus(lp)
+        mergePosition.asset = mergePosition.asset.gt(position.asset) ? mergePosition.asset.minus(position.asset) : ZERO_BI
+        mergePosition.lp = mergePosition.lp.gt(lp) ? mergePosition.lp.minus(lp) : ZERO_BI
+        mergePosition.open_lp = mergePosition.lp
         mergePosition.save()
     } else {
         let mergePositionId = poolAddress.toHexString().concat("-").concat("short")
@@ -308,14 +289,12 @@ export function handleLiquidate(event: Liquidate): void {
         if (mergePosition == null) {
             return
         }
-        mergePosition.open_lp = price.times(E18)
-            .div(mergePosition.open_price)
-            .times(mergePosition.open_lp).div(E18)
-            .minus(lp)
+        
         mergePosition.open_price = price
-        mergePosition.asset = mergePosition.asset.minus(position.asset)
-        mergePosition.lp = mergePosition.lp.minus(lp)
-        mergePosition.fake_lp = mergePosition.fake_lp.minus(lp)
+        mergePosition.asset = mergePosition.asset.gt(position.asset) ? mergePosition.asset.minus(position.asset) : ZERO_BI
+        mergePosition.lp = mergePosition.lp.gt(position.lp) ? mergePosition.lp.minus(position.lp) : ZERO_BI
+        mergePosition.fake_lp = mergePosition.fake_lp.gt(lp) ? mergePosition.fake_lp.minus(lp) : ZERO_BI
+        mergePosition.open_lp = mergePosition.fake_lp
         mergePosition.save()
     }
 
@@ -334,9 +313,10 @@ export function handleLiquidate(event: Liquidate): void {
     if (longMergePosition == null || shortMergePosition == null) {
         return
     }
-    pool.asset = pool.asset.minus(position.asset)
+    pool.margin = pool.margin.gt(asset.plus(position.margin).minus(position.asset)) ? pool.margin.minus(asset.plus(position.margin).minus(position.asset)) : ZERO_BI
+    pool.asset = pool.asset.gt(asset) ? pool.asset.minus(asset) : ZERO_BI
     pool.lp = longMergePosition.lp
-        .minus(position.lp.times(BigInt.fromI32(2).minus(lp)))
+        .plus(shortMergePosition.lp.times(BigInt.fromI32(2)).minus(shortMergePosition.fake_lp))
     pool.lp_price = pool.lp.equals(BigInt.fromI32(0)) ? E18 : pool.asset.times(E18).div(pool.lp)
     pool.count_position -= 1
     pool.save()
@@ -370,12 +350,13 @@ export function handleLiquidate(event: Liquidate): void {
     if (openOpertion.level > 0) {
         closeOpertion.lp = lp
     } else {
-        closeOpertion.lp = position.lp.times(BigInt.fromI32(2).minus(lp))
+        closeOpertion.lp = position.lp.times(BigInt.fromI32(2)).minus(lp)
     }
     closeOpertion.protocol_fee = fee
     closeOpertion.pnl = ZERO_BI.minus(openOpertion.margin)
     closeOpertion.lp_price = pool.lp_price
     closeOpertion.price = price
+    closeOpertion.tx_hash = event.transaction.hash.toHexString()
     closeOpertion.create_at = event.block.timestamp
     closeOpertion.create_block = event.block.number
     closeOpertion.save()
@@ -408,15 +389,17 @@ export function handleRebase(event: Rebase): void {
     longMergePosition.save()
 
     shortMergePosition.fake_lp = shortLp
+    if (shortLp.equals(ZERO_BI)) {
+        shortMergePosition.lp = shortLp
+    }
     shortMergePosition.save()
 
     pool.lp = longLp.plus(shortMergePosition.lp.times(BigInt.fromI32(2)).minus(shortLp))
     if (pool.lp.equals(ZERO_BI)) {
-        pool.lp_price = ZERO_BI
+        pool.lp_price = E18
     } else {
         pool.lp_price = pool.asset.times(E18).div(pool.lp)
     }
-    pool.token_price = price.toString()
     pool.save()
 }
 
@@ -432,16 +415,26 @@ export function handleAddLevel(event: AddLevel): void {
     }
     
     let levels = pool.level
-    for (let i = 0; i < levels.length; i++) {
-        if (levels[i] > level) {
-            for (let j = levels.length; j > i; j--) {
-                levels[j] = levels[j - 1]
-            }
-            levels[i] = level
-            break
-        }
-    }
+    // if (levels.length == 0) {
+    //     levels[0] == level
+    //     pool.level = levels
+    // } else {
+    //     for (let i = 0; i < levels.length; i++) {
+    //         if (levels[i] > level) {
+    //             for (let j = levels.length; j > i; j--) {
+    //                 levels[j] = levels[j - 1]
+    //             }
+    //             levels[i] = level
+    //             break
+    //         } else {
+    //             if (i == levels.length - 1) {
+    //                 levels[i + 1] = level
+    //             }
+    //         }
+    //     }
+    // }
     levels[levels.length] = level
+    
     pool.level = levels
     pool.save()
 }

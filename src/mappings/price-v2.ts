@@ -1,7 +1,5 @@
 import { Sync } from '../types/templates/UniswapV2orSushi/UniswapV2';
 import { Price, OracleToPool, Pool } from '../types/schema';
-import { sqrtPriceX96ToTokenPrices } from"../utils/pricing"
-import { E18 } from '../utils/constants';
 import { BigDecimal } from '@graphprotocol/graph-ts';
 
 export function handleSync(event: Sync): void {
@@ -36,12 +34,11 @@ export function handleSync(event: Sync): void {
         let newPrice = ""
 
         if (!pool.reverse) {
-            pool.token_price = BigDecimal.fromString(reserve0.toString()).div(BigDecimal.fromString(reserve1.toString())).toString()
             newPrice = BigDecimal.fromString(reserve0.toString()).div(BigDecimal.fromString(reserve1.toString())).toString()
         }else{
-            pool.token_price = BigDecimal.fromString(reserve1.toString()).div(BigDecimal.fromString(reserve0.toString())).toString()
             newPrice = BigDecimal.fromString(reserve1.toString()).div(BigDecimal.fromString(reserve0.toString())).toString()
         }
+        pool.token_price = newPrice
         pool.save()
         
         price = new Price(priceId)

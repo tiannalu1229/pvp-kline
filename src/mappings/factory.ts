@@ -1,13 +1,12 @@
 import { CreatePool } from '../types/Factory/Factory';
-import { MergePosition, OracleToPool, Pool, Setting } from '../types/schema';
+import { MergePosition, OracleToPool, Pool, Setting, Price } from '../types/schema';
 import { Pool as PoolTemplate, UniswapV3Pool as V3Tmp, UniswapV2orSushi as V2Tmp } from '../types/templates'
 import { ZERO_BI, E18 } from '../utils/constants';
-import { BigInt } from '@graphprotocol/graph-ts';
 import { SetMarginRatio, SetProtocolFee, AddLevel, RemoveLevel, SetLiqProtocolFee } from '../types/templates/UniswapV3Pool/Pool';
 import { fetchTradePair, fetchTokenSymbol, fetchTokenDecimals } from '../utils/token';
+import { fetchPrice } from '../utils/pricing';
+import { BigInt } from '@graphprotocol/graph-ts';
 
-//TODO need init level
-//TODO add oracle_from to record price oracle
 export function handleCreatePool(event: CreatePool): void {
 
     //get event data
@@ -24,6 +23,7 @@ export function handleCreatePool(event: CreatePool): void {
     }
 
     let id = poolAddress.toHexString()
+    let tokenPrice = fetchPrice(poolAddress)
     pool = new Pool(id)
     //get pair info
     let tokens = fetchTradePair(oracle)
@@ -33,19 +33,21 @@ export function handleCreatePool(event: CreatePool): void {
     let token1 = tokens[1]
     let token1Symbol = fetchTokenSymbol(token1)
     let token1Decimal = fetchTokenDecimals(token1)
-    pool.trade_pair = token0Symbol.concat("-").concat(token1Symbol)
+    pool.trade_pair = (token0Symbol.concat("-").concat(token1Symbol)).toUpperCase()
     pool.token0 = token0.toHexString()
-    pool.token0Symbol = token0Symbol
+    pool.token0Symbol = token0Symbol.toUpperCase()
     pool.token0Decimal = token0Decimal
     pool.token1 = token1.toHexString()
-    pool.token1Symbol = token1Symbol
+    pool.token1Symbol = token1Symbol.toUpperCase()
     pool.token1Decimal = token1Decimal
-    pool.token_price = "0"
+    pool.token_price = tokenPrice.toString()
     pool.pay_token = payToken.toHexString()
-    pool.pay_token_symbol = fetchTokenSymbol(payToken)
+    pool.pay_token_symbol = fetchTokenSymbol(payToken).toUpperCase()
+    pool.pay_token_decimal = fetchTokenDecimals(payToken)
     pool.oracle_type = type
     pool.oracle = oracle.toHexString()
     pool.reverse = reverse
+    pool.margin = ZERO_BI
     pool.asset = ZERO_BI
     pool.lp = ZERO_BI
     pool.lp_price = E18
@@ -67,7 +69,7 @@ export function handleCreatePool(event: CreatePool): void {
     longMergePosition = new MergePosition(longId)
     longMergePosition.asset = ZERO_BI
     longMergePosition.lp = ZERO_BI
-    longMergePosition.open_price = ZERO_BI
+    longMergePosition.open_price = tokenPrice
     longMergePosition.open_lp = ZERO_BI
     longMergePosition.fake_lp = ZERO_BI
     longMergePosition.create_at = event.block.timestamp
@@ -77,7 +79,7 @@ export function handleCreatePool(event: CreatePool): void {
     shortMergePosition = new MergePosition(shortId)
     shortMergePosition.asset = ZERO_BI
     shortMergePosition.lp = ZERO_BI
-    shortMergePosition.open_price = ZERO_BI
+    shortMergePosition.open_price = tokenPrice
     shortMergePosition.open_lp = ZERO_BI
     shortMergePosition.fake_lp = ZERO_BI
     shortMergePosition.create_at = event.block.timestamp
@@ -109,6 +111,20 @@ export function handleCreatePool(event: CreatePool): void {
     if (type == 3) {
         V3Tmp.create(oracle)
     }
+    if (type == 4) {
+        V2Tmp.create(oracle)
+    }
+    let priceId = poolAddress.toHexString()
+        .concat('-')
+        .concat(event.block.number.toString())
+        .concat('-')
+        .concat(event.logIndex.toString())
+    let price = new Price(priceId)
+    price.pool_address = poolAddress.toHexString()
+    price.create_at = event.block.timestamp
+    price.create_block = event.block.number
+    price.price = tokenPrice.toString()
+    price.save()
 }
 
 export function handleSetMarginRatio(event: SetMarginRatio): void {

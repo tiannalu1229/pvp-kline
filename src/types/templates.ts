@@ -29,3 +29,17 @@ export class UniswapV3Pool extends DataSourceTemplate {
     );
   }
 }
+
+export class UniswapV2orSushi extends DataSourceTemplate {
+  static create(address: Address): void {
+    DataSourceTemplate.create("UniswapV2orSushi", [address.toHex()]);
+  }
+
+  static createWithContext(address: Address, context: DataSourceContext): void {
+    DataSourceTemplate.createWithContext(
+      "UniswapV2orSushi",
+      [address.toHex()],
+      context
+    );
+  }
+}

@@ -10,6 +10,24 @@ import {
   BigInt
 } from "@graphprotocol/graph-ts";
 
+export class AddLevel extends ethereum.Event {
+  get params(): AddLevel__Params {
+    return new AddLevel__Params(this);
+  }
+}
+
+export class AddLevel__Params {
+  _event: AddLevel;
+
+  constructor(event: AddLevel) {
+    this._event = event;
+  }
+
+  get level(): i32 {
+    return this._event.parameters[0].value.toI32();
+  }
+}
+
 export class Close extends ethereum.Event {
   get params(): Close__Params {
     return new Close__Params(this);
@@ -41,6 +59,10 @@ export class Close__Params {
 
   get closePrice(): BigInt {
     return this._event.parameters[4].value.toBigInt();
+  }
+
+  get protocolFee(): BigInt {
+    return this._event.parameters[5].value.toBigInt();
   }
 }
 
@@ -75,6 +97,10 @@ export class Liquidate__Params {
 
   get liqPrice(): BigInt {
     return this._event.parameters[4].value.toBigInt();
+  }
+
+  get protocolFee(): BigInt {
+    return this._event.parameters[5].value.toBigInt();
   }
 }
 
@@ -164,6 +190,42 @@ export class Rebase__Params {
   }
 }
 
+export class RemoveLevel extends ethereum.Event {
+  get params(): RemoveLevel__Params {
+    return new RemoveLevel__Params(this);
+  }
+}
+
+export class RemoveLevel__Params {
+  _event: RemoveLevel;
+
+  constructor(event: RemoveLevel) {
+    this._event = event;
+  }
+
+  get level(): i32 {
+    return this._event.parameters[0].value.toI32();
+  }
+}
+
+export class SetLiqProtocolFee extends ethereum.Event {
+  get params(): SetLiqProtocolFee__Params {
+    return new SetLiqProtocolFee__Params(this);
+  }
+}
+
+export class SetLiqProtocolFee__Params {
+  _event: SetLiqProtocolFee;
+
+  constructor(event: SetLiqProtocolFee) {
+    this._event = event;
+  }
+
+  get liqProtocolFee(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+}
+
 export class SetMarginRatio extends ethereum.Event {
   get params(): SetMarginRatio__Params {
     return new SetMarginRatio__Params(this);
@@ -178,6 +240,24 @@ export class SetMarginRatio__Params {
   }
 
   get marginRatio(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+}
+
+export class SetProtocolFee extends ethereum.Event {
+  get params(): SetProtocolFee__Params {
+    return new SetProtocolFee__Params(this);
+  }
+}
+
+export class SetProtocolFee__Params {
+  _event: SetProtocolFee;
+
+  constructor(event: SetProtocolFee) {
+    this._event = event;
+  }
+
+  get protocolFee(): BigInt {
     return this._event.parameters[0].value.toBigInt();
   }
 }
@@ -239,32 +319,36 @@ export class Pool__mergedShortResult {
 
 export class Pool__positionsResult {
   value0: Address;
-  value1: i32;
-  value2: BigInt;
+  value1: Address;
+  value2: i32;
   value3: BigInt;
   value4: BigInt;
+  value5: BigInt;
 
   constructor(
     value0: Address,
-    value1: i32,
-    value2: BigInt,
+    value1: Address,
+    value2: i32,
     value3: BigInt,
-    value4: BigInt
+    value4: BigInt,
+    value5: BigInt
   ) {
     this.value0 = value0;
     this.value1 = value1;
     this.value2 = value2;
     this.value3 = value3;
     this.value4 = value4;
+    this.value5 = value5;
   }
 
   toMap(): TypedMap<string, ethereum.Value> {
     let map = new TypedMap<string, ethereum.Value>();
     map.set("value0", ethereum.Value.fromAddress(this.value0));
-    map.set("value1", ethereum.Value.fromI32(this.value1));
-    map.set("value2", ethereum.Value.fromUnsignedBigInt(this.value2));
+    map.set("value1", ethereum.Value.fromAddress(this.value1));
+    map.set("value2", ethereum.Value.fromI32(this.value2));
     map.set("value3", ethereum.Value.fromUnsignedBigInt(this.value3));
     map.set("value4", ethereum.Value.fromUnsignedBigInt(this.value4));
+    map.set("value5", ethereum.Value.fromUnsignedBigInt(this.value5));
     return map;
   }
 }
@@ -272,21 +356,6 @@ export class Pool__positionsResult {
 export class Pool extends ethereum.SmartContract {
   static bind(address: Address): Pool {
     return new Pool("Pool", address);
-  }
-
-  getPrice(): BigInt {
-    let result = super.call("getPrice", "getPrice():(uint256)", []);
-
-    return result[0].toBigInt();
-  }
-
-  try_getPrice(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall("getPrice", "getPrice():(uint256)", []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   index(): BigInt {
@@ -336,6 +405,25 @@ export class Pool extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+
+  liqProtocolFee(): BigInt {
+    let result = super.call("liqProtocolFee", "liqProtocolFee():(uint256)", []);
+
+    return result[0].toBigInt();
+  }
+
+  try_liqProtocolFee(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "liqProtocolFee",
+      "liqProtocolFee():(uint256)",
+      []
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   marginRatio(): BigInt {
@@ -425,21 +513,6 @@ export class Pool extends ethereum.SmartContract {
     );
   }
 
-  oracle(): Address {
-    let result = super.call("oracle", "oracle():(address)", []);
-
-    return result[0].toAddress();
-  }
-
-  try_oracle(): ethereum.CallResult<Address> {
-    let result = super.tryCall("oracle", "oracle():(address)", []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toAddress());
-  }
-
   owner(): Address {
     let result = super.call("owner", "owner():(address)", []);
 
@@ -473,23 +546,24 @@ export class Pool extends ethereum.SmartContract {
   positions(param0: BigInt): Pool__positionsResult {
     let result = super.call(
       "positions",
-      "positions(uint32):(address,int16,uint256,uint256,uint256)",
+      "positions(uint32):(address,address,int16,uint256,uint256,uint256)",
       [ethereum.Value.fromUnsignedBigInt(param0)]
     );
 
     return new Pool__positionsResult(
       result[0].toAddress(),
-      result[1].toI32(),
-      result[2].toBigInt(),
+      result[1].toAddress(),
+      result[2].toI32(),
       result[3].toBigInt(),
-      result[4].toBigInt()
+      result[4].toBigInt(),
+      result[5].toBigInt()
     );
   }
 
   try_positions(param0: BigInt): ethereum.CallResult<Pool__positionsResult> {
     let result = super.tryCall(
       "positions",
-      "positions(uint32):(address,int16,uint256,uint256,uint256)",
+      "positions(uint32):(address,address,int16,uint256,uint256,uint256)",
       [ethereum.Value.fromUnsignedBigInt(param0)]
     );
     if (result.reverted) {
@@ -499,42 +573,51 @@ export class Pool extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(
       new Pool__positionsResult(
         value[0].toAddress(),
-        value[1].toI32(),
-        value[2].toBigInt(),
+        value[1].toAddress(),
+        value[2].toI32(),
         value[3].toBigInt(),
-        value[4].toBigInt()
+        value[4].toBigInt(),
+        value[5].toBigInt()
       )
     );
   }
 
-  precisionDiff(): i32 {
-    let result = super.call("precisionDiff", "precisionDiff():(int8)", []);
+  protocolFee(): BigInt {
+    let result = super.call("protocolFee", "protocolFee():(uint256)", []);
 
-    return result[0].toI32();
+    return result[0].toBigInt();
   }
 
-  try_precisionDiff(): ethereum.CallResult<i32> {
-    let result = super.tryCall("precisionDiff", "precisionDiff():(int8)", []);
+  try_protocolFee(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall("protocolFee", "protocolFee():(uint256)", []);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
     let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toI32());
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  reverse(): boolean {
-    let result = super.call("reverse", "reverse():(bool)", []);
+  protocolReceipt(): Address {
+    let result = super.call(
+      "protocolReceipt",
+      "protocolReceipt():(address)",
+      []
+    );
 
-    return result[0].toBoolean();
+    return result[0].toAddress();
   }
 
-  try_reverse(): ethereum.CallResult<boolean> {
-    let result = super.tryCall("reverse", "reverse():(bool)", []);
+  try_protocolReceipt(): ethereum.CallResult<Address> {
+    let result = super.tryCall(
+      "protocolReceipt",
+      "protocolReceipt():(address)",
+      []
+    );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
     let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBoolean());
+    return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
   totalPosition(): BigInt {
@@ -549,6 +632,21 @@ export class Pool extends ethereum.SmartContract {
       "totalPosition():(uint256)",
       []
     );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getPrice(): BigInt {
+    let result = super.call("getPrice", "getPrice():(uint256)", []);
+
+    return result[0].toBigInt();
+  }
+
+  try_getPrice(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall("getPrice", "getPrice():(uint256)", []);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -571,8 +669,9 @@ export class Pool extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  open(margin: BigInt, level: i32): BigInt {
-    let result = super.call("open", "open(uint256,int16):(uint256)", [
+  open(user: Address, margin: BigInt, level: i32): BigInt {
+    let result = super.call("open", "open(address,uint256,int16):(uint256)", [
+      ethereum.Value.fromAddress(user),
       ethereum.Value.fromUnsignedBigInt(margin),
       ethereum.Value.fromI32(level)
     ]);
@@ -580,11 +679,20 @@ export class Pool extends ethereum.SmartContract {
     return result[0].toBigInt();
   }
 
-  try_open(margin: BigInt, level: i32): ethereum.CallResult<BigInt> {
-    let result = super.tryCall("open", "open(uint256,int16):(uint256)", [
-      ethereum.Value.fromUnsignedBigInt(margin),
-      ethereum.Value.fromI32(level)
-    ]);
+  try_open(
+    user: Address,
+    margin: BigInt,
+    level: i32
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "open",
+      "open(address,uint256,int16):(uint256)",
+      [
+        ethereum.Value.fromAddress(user),
+        ethereum.Value.fromUnsignedBigInt(margin),
+        ethereum.Value.fromI32(level)
+      ]
+    );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -639,6 +747,10 @@ export class ConstructorCall__Inputs {
 
   get reverse_(): boolean {
     return this._call.inputValues[2].value.toBoolean();
+  }
+
+  get typ(): i32 {
+    return this._call.inputValues[3].value.toI32();
   }
 }
 
@@ -783,12 +895,16 @@ export class OpenCall__Inputs {
     this._call = call;
   }
 
+  get user(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+
   get margin(): BigInt {
-    return this._call.inputValues[0].value.toBigInt();
+    return this._call.inputValues[1].value.toBigInt();
   }
 
   get level(): i32 {
-    return this._call.inputValues[1].value.toI32();
+    return this._call.inputValues[2].value.toI32();
   }
 }
 
@@ -824,6 +940,14 @@ export class CloseCall__Inputs {
   get index(): BigInt {
     return this._call.inputValues[0].value.toBigInt();
   }
+
+  get user(): Address {
+    return this._call.inputValues[1].value.toAddress();
+  }
+
+  get receipt(): Address {
+    return this._call.inputValues[2].value.toAddress();
+  }
 }
 
 export class CloseCall__Outputs {
@@ -853,6 +977,10 @@ export class LiquidateCall__Inputs {
 
   get index(): BigInt {
     return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get receipt(): Address {
+    return this._call.inputValues[1].value.toAddress();
   }
 }
 
@@ -890,6 +1018,36 @@ export class SetMarginRatioCall__Outputs {
   _call: SetMarginRatioCall;
 
   constructor(call: SetMarginRatioCall) {
+    this._call = call;
+  }
+}
+
+export class SetProtocolReceiptCall extends ethereum.Call {
+  get inputs(): SetProtocolReceiptCall__Inputs {
+    return new SetProtocolReceiptCall__Inputs(this);
+  }
+
+  get outputs(): SetProtocolReceiptCall__Outputs {
+    return new SetProtocolReceiptCall__Outputs(this);
+  }
+}
+
+export class SetProtocolReceiptCall__Inputs {
+  _call: SetProtocolReceiptCall;
+
+  constructor(call: SetProtocolReceiptCall) {
+    this._call = call;
+  }
+
+  get protocolReceipt_(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+}
+
+export class SetProtocolReceiptCall__Outputs {
+  _call: SetProtocolReceiptCall;
+
+  constructor(call: SetProtocolReceiptCall) {
     this._call = call;
   }
 }

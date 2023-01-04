@@ -13,7 +13,9 @@ type Pool @entity {
   reverse: Boolean!
   pay_token: String!
   pay_token_symbol: String!
+  pay_token_decimal: BigInt!
   level: [Int!]!
+  margin: BigInt!
   asset: BigInt!
   lp: BigInt!
   lp_price: BigInt!
@@ -32,6 +34,7 @@ type Setting @entity {
 
 type Position @entity {
   id: ID!
+  index: BigInt!
   pool_address: String!
   type: Int!
   user: String!
@@ -63,6 +66,7 @@ type Opertion @entity {
   price: BigInt!
   protocol_fee: BigInt!
   pnl: BigInt!
+  tx_hash: String!
   create_at: BigInt!
   create_block: BigInt!
 }
@@ -86,6 +90,7 @@ type OracleToPool @entity {
 type Price @entity {
   id: ID!
   pool_address: String!
+  tmp_address: String!
   price: String!
   create_at: BigInt!
   create_block: BigInt!
